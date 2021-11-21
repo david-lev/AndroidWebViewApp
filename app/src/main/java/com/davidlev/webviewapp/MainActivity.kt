@@ -13,38 +13,37 @@ import android.util.Log
 import android.view.View
 import android.webkit.*
 import android.webkit.WebView.WebViewTransport
-import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-
+import com.davidlev.webviewapp.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-    private var myWebView: WebView? = null
-    private var progressBar: ProgressBar? = null
 
+    private lateinit var binding: ActivityMainBinding
+
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        myWebView = findViewById<View>(R.id.web_view) as WebView
-        progressBar = findViewById<View>(R.id.progress_bar) as ProgressBar
-        val webSettings = myWebView!!.settings
-        webSettings.javaScriptEnabled = true
-        webSettings.loadWithOverviewMode = true
-        webSettings.useWideViewPort = true
-        webSettings.domStorageEnabled = true
-        webSettings.allowFileAccess = true
-        webSettings.setSupportZoom(true)
-        webSettings.builtInZoomControls = true
-        webSettings.displayZoomControls = false
-        myWebView!!.settings.userAgentString =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36"
-        webSettings.setSupportMultipleWindows(true)
-        webSettings.pluginState = WebSettings.PluginState.ON
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            webSettings.mediaPlaybackRequiresUserGesture = false
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        with(binding.webView.settings) {
+            javaScriptEnabled = true
+            loadWithOverviewMode = true
+            useWideViewPort = true
+            domStorageEnabled = true
+            allowFileAccess = true
+            setSupportZoom(true)
+            builtInZoomControls = true
+            displayZoomControls = false
+            setSupportMultipleWindows(true)
+            mediaPlaybackRequiresUserGesture = false
         }
-        myWebView!!.webChromeClient = object : WebChromeClient() {
+
+        binding.webView.webChromeClient = object : WebChromeClient() {
+            @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
             override fun onPermissionRequest(request: PermissionRequest) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val isCameraApproved =
@@ -64,9 +63,7 @@ class MainActivity : AppCompatActivity() {
                         return
                     }
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    request.grant(request.resources)
-                }
+                request.grant(request.resources)
             }
 
             override fun onCreateWindow(
@@ -82,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                 resultMsg.sendToTarget()
                 newWebView.webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-                        myWebView!!.loadUrl(url)
+                        binding.webView.loadUrl(url)
                         return true
                     }
                 }
@@ -96,24 +93,24 @@ class MainActivity : AppCompatActivity() {
 
             override fun onHideCustomView() {}
         }
-        myWebView!!.webViewClient = object : WebViewClient() {
+
+        binding.webView.webViewClient = object : WebViewClient() {
+            @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
             override fun shouldOverrideUrlLoading(
                 view: WebView,
                 request: WebResourceRequest
             ): Boolean {
-                progressBar!!.visibility = View.VISIBLE
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    Log.d("MainActivity", request.url.toString())
-                }
+                binding.progressBar.visibility = View.VISIBLE
+                Log.d("MainActivity", request.url.toString())
                 return super.shouldOverrideUrlLoading(view, request)
             }
 
             override fun onPageFinished(view: WebView, url: String) {
-                progressBar!!.visibility = View.GONE
+                binding.progressBar.visibility = View.GONE
                 super.onPageFinished(view, url)
             }
         }
-        myWebView!!.setDownloadListener(DownloadListener { url, userAgent, contentDisposition, mimeType, l ->
+        binding.webView.setDownloadListener(DownloadListener { url, userAgent, contentDisposition, mimeType, l ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 val isApproved =
                     applicationContext.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE")
@@ -140,7 +137,7 @@ class MainActivity : AppCompatActivity() {
             dm.enqueue(request)
             Toast.makeText(applicationContext, "Download started", Toast.LENGTH_LONG).show()
         })
-        myWebView!!.loadUrl("https://davidlev.me/")
+        binding.webView.loadUrl("https://davidlev.me/")
     }
 
     override fun onRequestPermissionsResult(
@@ -161,8 +158,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (myWebView!!.canGoBack()) {
-            myWebView!!.goBack()
+        if (binding.webView.canGoBack()) {
+            binding.webView.goBack()
         } else {
             super.onBackPressed()
         }
